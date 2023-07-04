@@ -1,0 +1,11 @@
+{
+    "lang": "tr-TR",
+    "name": "PS",
+    "short_name": "PS",
+    "description": "PS KONTROL",
+    "start_url": "./index.html",
+    "background_color": "#ffffff",
+    "theme_color": "#ffffff",
+    "orientation": "any",
+    "display": "standalone"
+}

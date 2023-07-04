@@ -1,0 +1,140 @@
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="manifest" href="manifest.webmanifest">
+        <script src="jquery.js"></script>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+        <style>
+            html,body{
+                margin:0;
+                padding:0;
+            }
+            .content{
+                width: 100%;
+            }
+            .ps{
+                width: 25%;
+                margin-top: 10px;
+            }
+            .cont{
+            }
+            .psContent{
+                position: relative;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="row px-4 py-1">
+                <button class="btn-success btn w-25" onclick="refresh()">
+                    Yenile
+                </button>
+        </div>
+        <div class="content row m-0 justify-content-center" id="pslist">
+            
+        </div>
+        <script>
+            if('serviceWorker' in navigator) {
+              navigator.serviceWorker.register('/worker.js', { scope: '.' });
+              console.log('working');
+            }else{
+                console.log('worker error');
+            }
+        </script>
+        <script>
+            
+            (()=>{
+                getLocalDatas();
+            })();
+
+            function getLocalDatas(){
+                var pss = localStorage.getItem('pss');
+                console.log(pss);
+                if(pss == null){
+                    pss = [
+                        {statu:-1},
+                        {statu:-1},
+                        {statu:-1},
+                        {statu:-1},
+                        {statu:-1},
+                        {statu:-1},
+                        {statu:-1},
+                        {statu:-1},
+                        {statu:-1},
+                        {statu:-1}
+                    ];
+                    localStorage.setItem("pss", JSON.stringify(pss));
+                    window.location = window.location;
+                }
+                else{
+                    pss = JSON.parse(pss);
+                    window.pss = pss;
+                    var dat = new Date();
+                    
+                    for(var i = 0; i < pss.length; i++){
+                        var stdat = new Date(parseInt(pss[i].start));
+                        var drm = 0;
+                        if(pss[i].statu > 0){
+                            console.log(dat.getTime() - parseInt(pss[i].start) +"   ---   "+ (parseInt(pss[i].statu) * 1000 * 60 *60));
+                            if(Number(dat.getTime() - parseInt(pss[i].start)) > Number(parseInt(pss[i].statu) * 1000 * 60 *60)){
+                                alert(`PS-${i+1}.. Süresi Doldu`);
+                                drm = 1;
+                            }else{
+                                setTimeout((ps)=>{
+                                    alert(`PS-${ps} Süresi Doldu`);
+                                }, (parseInt(pss[i].start) + (1000 * 60 * 60 * parseInt(pss[i].statu))) - dat.getTime(), i + 1);
+                            }
+                        }
+                        $("#pslist").append(`
+                        <div class="col-sm-4 col-12 col-xl-3 my-1" id="p${i}">
+                            <div class="psContent col ${drm == 1 ? "bg-danger" : "bg-secondary"}">
+                                <div class="cont col-12 p-1 ${pss[i].statu > -1 ? "" : "d-none"}">
+                                    <h4 class="text-center p-0">PS-${i+1}</h4>
+                                    <h5 class="p-0">${pss[i].statu == 0 ? "Süresiz" : pss[i].statu+" Saat"}</h5>
+                                    <h5 class="p-0">Başlangıç - ${stdat.toLocaleTimeString()}</h5>
+                                    <h5 class="p-0">Geçen Süre - ${parseInt((dat.getTime() - parseInt(pss[i].start)) / 1000 / 60)}dk</h5>
+                                    ${Number(pss[i].statu) > -1? "<button class='btn btn-primary w-100' onClick='javascript:(masakapat("+i+"))'>Masa Kapat</button>" : "<button class='btn btn-primary w-100' onClick='javascript:(masaac("+i+"))'>Masa Aç</button>"}
+                                </div>
+                                <div class="cont col-12 p-1 ${pss[i].statu < 0 ? "" : "d-none"}">
+                                    <h4 class="text-center p-0">PS-${i+1}</h4>
+                                    <h5 class="p-0">Kapalı</h5>
+                                    <h5 class="p-0">&nbsp;</h5>
+                                    <h5 class="p-0">&nbsp;</h5>
+                                    ${Number(pss[i].statu) > -1? "<button class='btn btn-primary w-100' onClick='javascript:(masakapat("+i+"))'>Masa Kapat</button>" : "<button class='btn btn-primary w-100' onClick='javascript:(masaac("+i+"))'>Masa Aç</button>"}
+                                </div>
+                            </div>
+                        </div>
+                        `);
+                    }
+                }
+            }
+            async function masaac(x){
+                console.log("masa aç");
+                var t = await prompt("Süre ");
+                var date = await new Date().getTime();
+                window.pss[x]= await {
+                    statu:t,
+                    start:date
+                };
+                await localStorage.setItem("pss", JSON.stringify(window.pss));
+                window.location = await window.location;
+            }
+            function refresh(){
+                window.location = window.location;
+            }
+            async function masakapat(x){
+                console.log("masa kapat");
+                var date = await new Date().getTime();
+                var tl = await prompt("Saatlik Ücret");
+                var sr = await (parseInt((date - parseInt(window.pss[x].start)) / 1000 / 60));
+                alert(`Masa Ücreti : ${(tl / 60) * sr}TL`);
+                window.pss[x]= await {
+                    statu:-1,
+                };
+                await localStorage.setItem("pss", JSON.stringify(window.pss));
+                window.location = await window.location;
+            }
+        </script>
+    </body>
+</html>
